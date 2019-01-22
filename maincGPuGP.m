@@ -34,6 +34,7 @@ dc = 3;             % decorrelation distance
 sigmaPsi = 7;       % shadowing std. dev. in dB
 L0dB = -10;         % 30 in dB, channel gain (PTX + antenna gain)
 p_learning_cGP = 1;     % power of kernel function used for learning cGP (uGP always uses a power of 2)
+Nsteps=8;	   % number of grid points for learning
 
 % other simulation parameters
 sigmaLow = 1e-9;    % good location std. dev. for training  
@@ -97,10 +98,10 @@ measurementDB.NoMeasurements = NoMeasurementsSigmaLow + NoMeasurementsSigmaHigh;
 % Part 3: learn the channel parameters and compute GP variables
 % ------------------------------------------------------------
 disp('perform cGP learning')
-cGPParam = f_cGPLearnParameters( measurementDB ,8,p_learning_cGP);  % cGP learning
+cGPParam = f_cGPLearnParameters( measurementDB ,Nsteps,p_learning_cGP);  % cGP learning
 cGPTrainingDB = f_cGPGenerateTrainingDB( measurementDB, cGPParam ,p_learning_cGP); % compute correlation matrices etc. 
 disp('perform uGP learning')
-uGPParam = f_uGPLearnParameters( measurementDB ,8); % uGP learning
+uGPParam = f_uGPLearnParameters( measurementDB ,Nsteps); % uGP learning
 uGPTrainingDB = f_uGPGenerateTrainingDB( measurementDB, uGPParam ); % compute correlation matrices etc. 
                 
 

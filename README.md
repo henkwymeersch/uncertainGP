@@ -1,4 +1,4 @@
-# uncertain GP
+# Uncertain GP
 Gaussian processes with uncertain input, applied to wireless channel learning and prediction
 
 ## Summary
@@ -36,7 +36,7 @@ The code will then go through a number of steps, for both cGP and uGP:
 ## Authors
 The code was developed by Dr. Markus Fröhle, while he was a PhD student at Chalmers University of Technology. The code is based on the paper 
 
-Fröhle, Markus, Themistoklis Charalambous, Ido Nevat, and Henk Wymeersch. "Channel Prediction With Location Uncertainty for Ad Hoc Networks." IEEE Transactions on Signal and Information Processing over Networks 4, no. 2 (2018): 349-361.
+Fröhle, Markus, Themistoklis Charalambous, Ido Nevat, and Henk Wymeersch. "Channel Prediction With Location Uncertainty for Ad Hoc Networks." *IEEE Transactions on Signal and Information Processing over Networks*, vol. 4, no. 2 (2018): 349-361.
 
 If you plan to use or modify this code, please cite our work:
 

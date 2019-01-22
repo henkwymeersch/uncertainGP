@@ -33,12 +33,14 @@ The code will then go through a number of steps, for both cGP and uGP:
 5. Perform prediction
 6. Visualize results
 
-An example result is shown below. 
+An example result is provided below, showing the predicted mean power for cGP.  
 
-![example](example.jpeg=250x250)
+<p align="center">
+  <img src="https://github.com/henkwymeersch/uncertainGP/blob/master/example.jpeg" width="400">
+</p>
 
 ## Authors
-The code was developed by Dr. Markus Fröhle, while he was a PhD student at Chalmers University of Technology. The code is based on the paper 
+The code was developed by Dr. Markus Fröhle, while he was a PhD student at Chalmers University of Technology. The code is based on the paper: 
 
 Fröhle, Markus, Themistoklis Charalambous, Ido Nevat, and Henk Wymeersch. "Channel Prediction With Location Uncertainty for Ad Hoc Networks." *IEEE Transactions on Signal and Information Processing over Networks*, vol. 4, no. 2 (2018): 349-361.
 

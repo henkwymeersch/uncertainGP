@@ -35,7 +35,7 @@ The code will then go through a number of steps, for both cGP and uGP:
 
 An example result is shown below. 
 
-![example](example.jpg)
+![example](example.jpeg)
 
 ## Authors
 The code was developed by Dr. Markus Fröhle, while he was a PhD student at Chalmers University of Technology. The code is based on the paper 

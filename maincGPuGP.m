@@ -27,21 +27,21 @@ RandStream.setGlobalStream(s);
 % Part 1: setup the simulation 
 % ------------------------------------------------------------
 disp('starting the simulation')
-xmax = 30;          % max. dimensions
-ymax = 30;           
+xmax = 300;          % max. dimensions
+ymax = 300;           
 eta = 2;            % pathloss exponent
 dc = 3;             % decorrelation distance
 sigmaPsi = 7;       % shadowing std. dev. in dB
 L0dB = -10;         % 30 in dB, channel gain (PTX + antenna gain)
 p_learning_cGP = 1;     % power of kernel function used for learning cGP (uGP always uses a power of 2)
-Nsteps=8;	   % number of grid points for learning
+Nsteps=20;	   % number of grid points for learning
 
 % other simulation parameters
 sigmaLow = 1e-9;    % good location std. dev. for training  
 sigmaHigh = 10;     % bad location std. dev. for training 
-fractionp = 0.7;    % fraction p of bad measurements
+fractionp = 0.4;    % fraction p of bad measurements
 disp(['the database has a fraction of ' num2str(fractionp ) ' bad measurements']);
-NoMeasurements = 1000; % # of measurements used for channel parameter estimation incl. reciprocal
+NoMeasurements = 500; % # of measurements used for channel parameter estimation incl. reciprocal
 xTX1dim = 15; %location of TX is fixed
 yTX1dim = 15;
 
@@ -56,14 +56,14 @@ disp('generating the database')
 NoMeasurementsSigmaHigh = floor(NoMeasurements * fractionp); 
 NoMeasurementsSigmaLow = NoMeasurements - NoMeasurementsSigmaHigh;
 
-% generate training locations for good database
+% generate training locations for bad database
 xTX = ones(NoMeasurementsSigmaHigh/2,1) .* xTX1dim; % fix TX position
 yTX = ones(NoMeasurementsSigmaHigh/2,1) .* yTX1dim;
 xRX = rand(NoMeasurementsSigmaHigh/2,1) .* xmax; % random
 yRX = rand(NoMeasurementsSigmaHigh/2,1) .* ymax;
 u_sigmaHigh = [[xTX, yTX, xRX, yRX];[xRX, yRX, xTX, yTX]]; % exact position & reciprocal
         
-% generate training locations for bad database
+% generate training locations for gooddatabase
 xTX = ones(NoMeasurementsSigmaLow/2,1) .* xTX1dim; % fix TX position
 yTX = ones(NoMeasurementsSigmaLow/2,1) .* yTX1dim;
 xRX = rand(NoMeasurementsSigmaLow/2,1) .* xmax; % random

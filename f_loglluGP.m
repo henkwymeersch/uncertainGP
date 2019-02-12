@@ -1,11 +1,12 @@
 function [logll] = f_loglluGP(upsilon, dc, sigma2psi, sigma2proc, N_train, u_train, Sigma_train_all_RX, Sigma_train_all_TX, sigma_n, sigma2_xi_all)
 % (c) Markus Froehle, Date: 2019-01-17
 % Description: function computes log likelihood for a given set of input
-% values - uGP case, added sigma_xi_all
+% values - uGP case
 
+upsilon=upsilon(1:N_train);
 % build covariance matrix K:
 C_train = zeros(N_train,N_train);
-parfor i=1:N_train
+for i=1:N_train
     for j=1:N_train
         if i<=j
             % TX->RX:

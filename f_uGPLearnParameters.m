@@ -11,6 +11,10 @@ function [ uGP ]  = f_uGPLearnParameters( DB ,Nsteps)
 % Nsteps is the granularity of the search 
 % output: uGP struct with estimated channel parameters
 
+% local parameters
+dcvec = linspace( 0.1, 10, Nsteps+1);                               % [m] trial correlation distance
+sigma2vec=1:0.2:50;                                                 %  range of values for total variance
+dMin = 50;                                                          %  [m] mahalanobis distance type metric to reduce training set based on linearization error
 sigma_n = 0.01; % std.dev. measurement noise
 sigma2n = sigma_n^2; % measurement noise
 Y = DB.y; % measurement vector
@@ -24,6 +28,13 @@ yTX = DB.mu(:,2);
 xRX = DB.mu(:,3);
 yRX = DB.mu(:,4);
 d = sqrt( (xTX-xRX).^2 + (yTX-yRX).^2 );
+dH =zeros(1,N_train);
+for i=1:N_train    
+    Sigma = eye(2)*((DB.sigmaTX(i))^2+(DB.sigmaRX(i))^2);    
+    zz=[xTX(i)-xRX(i), yTX(i)-yRX(i)];
+    dH(i)=zz*inv(Sigma)*zz';
+end
+
 F = [ones(N_train,1), -10 * log10( d )];
 Jiter = 100; % number of iterations for WLS algorithm
 Theta_hatV = zeros(2,Jiter);
@@ -50,36 +61,49 @@ Z = Y - F * Theta_hat(:);
 
 % Step 3: compute total residual variance
 % ---------------------------------------
-sigma2tot_fproc = 1/N_train * sum( Z.^2 );
-sigma2vec=1:0.2:50;
+% generate reduced dataset: only use measurements for learning that low
+% linearization error
+idxMeasurements = dH > dMin;
+DBnew.NoMeasurements = sum( idxMeasurements );
+DBnew.y = DB.y( idxMeasurements );
+DBnew.x = DB.x( idxMeasurements,: );
+DBnew.mu = DB.mu( idxMeasurements,: );
+DBnew.xhat = DB.xhat( idxMeasurements,: );
+DBnew.sigmaTX = DB.sigmaTX( idxMeasurements );
+DBnew.sigmaRX = DB.sigmaRX( idxMeasurements );
+N_trainnew = DBnew.NoMeasurements; % now based on reduced DB
+Znew = Z( idxMeasurements );
+sigma2_xinew = sigma2_xi( idxMeasurements ); 
+
 K=length(sigma2vec);
 % formulate negative log likelihood
 for k=1:K
-    LLF(k)=sum(log((sigma2_xi+sigma2vec(k)))) + sum(Z.^2./((sigma2_xi+sigma2vec(k))));
+    LLF(k)=sum(log((sigma2_xinew+sigma2vec(k)))) + sum(Znew.^2./((sigma2_xinew+sigma2vec(k))));
 end
 [~,bestIndex]=min(LLF);
-sigma2tot=sigma2vec(bestIndex); % this should be equal to noise + process + shadowing variances
+sigma2tot=sigma2vec(bestIndex) % this should be equal to noise + process + shadowing variances
+%alternate expression: sigma2tot = 1/N_trainnew * sum( Znew.^2 )
 
 % Step 4: grid search over dc and sigmaPsi
 % -----------------------------------------
-sigmaPsivec = linspace( 0, sqrt(sigma2tot-sigma2n ), Nsteps );    % trial standard deviation
-dcvec = linspace( 0.1, 15, Nsteps+1);                             % trial correlation distance
-logll = zeros( Nsteps,Nsteps+1 );
-fractionOfUsedTrainingData=0.2;                             % fraction of the training data base used for learning, since this loop is very very slow
-for j=1:Nsteps
+sigmaPsivec = linspace( 0, sqrt(sigma2tot-sigma2n ), Nsteps );     % trial standard deviation
+logllA = zeros( length(sigmaPsivec),Nsteps+1 );
+fractionOfUsedTrainingData=1;                                       % fraction of the training data base used for learning, since this loop is very very slow
+for j=1:length(sigmaPsivec)
     fprintf('j:%g\n\r',j);
     for i=1:Nsteps+1
+        fprintf('i:%g\n\r',i);
         sigma2psitmp = sigmaPsivec(j)^2;
         sigma2proc = sigma2tot - sigma2psitmp;                        
-        logll(j,i) = f_loglluGP( Z, dcvec(i), sigmaPsivec(j)^2, sigma2proc , round(fractionOfUsedTrainingData*N_train), DB.mu, DB.sigmaTX, DB.sigmaRX, sigma_n, sigma2_xi ); % added sigma2_xinew                        
-        if logll(j,i) == -Inf
-            logll(j,i) = Inf;
+        logllA(j,i) = f_loglluGP( Znew, dcvec(i), sigmaPsivec(j)^2, sigma2proc , round(fractionOfUsedTrainingData*N_trainnew), DBnew.mu, DBnew.sigmaTX, DBnew.sigmaRX, sigma_n, sigma2_xinew ); % added sigma2_xinew                        
+        if logllA(j,i) == -Inf
+            logllA(j,i) = Inf;
             fprintf('uGP::logll = -Inf, parameter value excluded \n\r');
         end
     end
 end
-minMatrix = min(logll(:));
-[row,col] = find(logll==minMatrix);
+minMatrix = min(logllA(:));
+[row,col] = find(logllA==minMatrix);
 dc_estimated = dcvec(col);
 sigmaPsi_estimated = sigmaPsivec(row);
 sigma2proc_estimated= sigma2tot - sigmaPsi_estimated.^2;

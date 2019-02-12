@@ -29,7 +29,7 @@ y_train = y_true; % Note: state u_train is noisy, but observation y_train is tak
 
 % build covariance matrix K:
 C_train = zeros(N_train,N_train);
-parfor i=1:N_train
+for i=1:N_train
     for j=1:N_train
         if i<=j
             % TX->RX:

@@ -14,7 +14,8 @@ function [ uGP ]  = f_uGPLearnParameters( DB ,Nsteps)
 % local parameters
 dcvec = linspace( 0.1, 10, Nsteps+1);                               % [m] trial correlation distance
 sigma2vec=1:0.2:50;                                                 %  range of values for total variance
-dMin = 50;                                                          %  [m] mahalanobis distance type metric to reduce training set based on linearization error
+dMin = 10;                                                          %  metric to reduce training set based on linearization error
+fractionOfUsedTrainingData=1;                                       % fraction of the training data base used for learning, since this loop is very very slow
 sigma_n = 0.01; % std.dev. measurement noise
 sigma2n = sigma_n^2; % measurement noise
 Y = DB.y; % measurement vector
@@ -28,12 +29,7 @@ yTX = DB.mu(:,2);
 xRX = DB.mu(:,3);
 yRX = DB.mu(:,4);
 d = sqrt( (xTX-xRX).^2 + (yTX-yRX).^2 );
-dH =zeros(1,N_train);
-for i=1:N_train    
-    Sigma = eye(2)*((DB.sigmaTX(i))^2+(DB.sigmaRX(i))^2);    
-    zz=[xTX(i)-xRX(i), yTX(i)-yRX(i)];
-    dH(i)=zz*inv(Sigma)*zz';
-end
+
 
 F = [ones(N_train,1), -10 * log10( d )];
 Jiter = 100; % number of iterations for WLS algorithm
@@ -55,6 +51,17 @@ end
 Theta_hat = Theta_hatV(:,Jiter);
 fprintf('uGP::L0dB=%g, eta=%g\n', Theta_hat(1), Theta_hat(2) );
 
+
+%dH =zeros(1,N_train);
+dH2 =zeros(1,N_train);          % a metric to capture linearization error
+for i=1:N_train    
+  %   Sigma = eye(2)*((DB.sigmaTX(i))^2+(DB.sigmaRX(i))^2);    
+  %  zz=[xTX(i)-xRX(i), yTX(i)-yRX(i)];
+  %  dH(i)=zz*inv(Sigma)*zz';
+    dH2(i)=abs(F(i,:) * Theta_hat(:))/sqrt(sigma2_xi(i));       % mean of path loss / standard deviation
+end
+
+
 % Step 2: Remove the mean from the observations
 % ----------------------------------------------
 Z = Y - F * Theta_hat(:); 
@@ -63,7 +70,8 @@ Z = Y - F * Theta_hat(:);
 % ---------------------------------------
 % generate reduced dataset: only use measurements for learning that low
 % linearization error
-idxMeasurements = dH > dMin;
+%idxMeasurements = dH > dMin;
+idxMeasurements = dH2 > dMin;
 DBnew.NoMeasurements = sum( idxMeasurements );
 DBnew.y = DB.y( idxMeasurements );
 DBnew.x = DB.x( idxMeasurements,: );
@@ -88,7 +96,6 @@ sigma2tot=sigma2vec(bestIndex) % this should be equal to noise + process + shado
 % -----------------------------------------
 sigmaPsivec = linspace( 0, sqrt(sigma2tot-sigma2n ), Nsteps );     % trial standard deviation
 logllA = zeros( length(sigmaPsivec),Nsteps+1 );
-fractionOfUsedTrainingData=1;                                       % fraction of the training data base used for learning, since this loop is very very slow
 for j=1:length(sigmaPsivec)
     fprintf('j:%g\n\r',j);
     for i=1:Nsteps+1
